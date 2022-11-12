@@ -1,0 +1,32 @@
+pipeline { 
+    agent any 
+environement{
+    PATH - "/opt/maven3/bin:$PATH"
+}
+    stages {
+        stage('git checkout') { 
+            steps { 
+                git branch: 'main', credentialsId: 'prasad', url: 'https://github.com/vvtrinadh123/myweb.git'
+            }
+        }
+        stage('build'){
+            steps {
+                sh "mvn clean package"
+                sh "mv target/*.war target/myweb.war" 
+            }
+        }
+        stage('tomcat') {
+            steps {
+                shagent(['tomcat']){
+                sh """
+  		    scp -o StrictHostkeyChecking=no targer/myweb.war ec2-user@172.31.3.15:/home/ec2-user/apache-tomcat-9.0.68/webapps/
+
+		    ssh ec2-user@172.31.3.15:/home/ec2-user/apache-tomcat-9.0.68/bin/shutdown.sh
+
+		    ssh ec2-user@172.31.3.15:/home/ec2-user/apache-tomcat-9.0.68/bin/startup.sh
+
+            }
+        }
+    }
+}
+
